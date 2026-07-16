@@ -6,37 +6,25 @@
     </div>
     <div class="select-wrapper">
       <select v-model="store.providerId" @change="onProviderChange">
-        <option v-for="p in providers" :key="p.id" :value="p.id">
+        <option v-for="p in PROVIDERS" :key="p.id" :value="p.id">
           {{ p.emoji }} {{ p.name }}
         </option>
       </select>
     </div>
-    <div class="hint-text">{{ store.currentProvider.hint }}</div>
+    <div class="hint-text">{{ store.currentProvider!.hint }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useConfigStore } from '@/stores/configStore'
+import { useConfigStore, PROVIDERS } from '@/stores/configStore'
 
 const store = useConfigStore()
 
-const providers = [
-  { id: 'deepseek', name: 'DeepSeek', emoji: '🔍' },
-  { id: 'openai', name: 'OpenAI', emoji: '⚡' },
-  { id: 'claude', name: 'Claude (Anthropic)', emoji: '🤖' },
-  { id: 'gemini', name: 'Gemini (Google)', emoji: '✨' },
-  { id: 'qwen', name: '通义千问', emoji: '🔮' },
-]
-
 function onProviderChange() {
-  // 清空旧的密钥和端点
+  const p = store.currentProvider!
   store.endpoint = ''
   store.apiKey = ''
-  store.model = store.currentProvider.defaultModel
-
-  // 新增：切换成功提示
-  const providerName = store.currentProvider.name
-  const emoji = store.currentProvider.emoji
-  window.showToast(` 已切换到  ${providerName}`, 'success')
+  store.model = p.defaultModel
+  window.showToast(` 已切换到  ${p.name}`, 'success')
 }
 </script>

@@ -11,11 +11,6 @@
     <ActionButtons />
   </div>
 
-  <!-- ===== 全局 Toast ===== -->
-  <div v-if="toastVisible" class="global-toast" :class="toastType">
-    {{ toastMessage }}
-  </div>
-
   <!-- ===== 帮助弹窗 ===== -->
   <div v-if="helpVisible" class="help-overlay" @click.self="helpVisible = false">
     <div class="help-modal">
@@ -618,48 +613,6 @@ input[type="range"]::-webkit-slider-thumb {
   color: #fff;
 }
 .btn-confirm-danger:hover { background: var(--danger-hover); }
-
-/* ===== 全局 Toast（动态挂载到 body） ===== */
-.global-toast-body {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  padding: 16px 32px !important;
-  border-radius: 12px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  z-index: 9999999 !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
-  max-width: 90% !important;
-  text-align: center !important;
-  pointer-events: none !important;
-  animation: toastPopIn 0.3s ease !important;
-  color: #fff !important;
-}
-
-.global-toast-body.success {
-  background: #22c55e !important;
-}
-
-.global-toast-body.error {
-  background: #ef4444 !important;
-}
-
-.global-toast-body.info {
-  background: #2563eb !important;
-}
-
-@keyframes toastPopIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
 
 /* ===== 帮助弹窗 ===== */
 .help-overlay {

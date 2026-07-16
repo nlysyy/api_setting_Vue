@@ -59,11 +59,8 @@ const modelList = ref<string[]>([])
 
 const canFetch = computed(() => {
   const provider = store.currentProvider
-  // 本地模型不能拉取
   if (provider.id === 'localBuiltin') return false
-   // 检查 API 密钥
   if (provider.requiresKey && !store.apiKey) return false
-  // 检查端点（如果是需要端点的服务商）
   if (provider.showUrl && !store.endpoint) return false
   return true
 })
@@ -85,33 +82,6 @@ watch(() => store.apiKey, () => {
 })
 
 // ============================================================
-// Toast 弹窗系统
-// ============================================================
-let toastTimer: number | null = null
-
-function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
-  const existing = document.querySelector('.custom-toast')
-  if (existing) existing.remove()
-  if (toastTimer) {
-    clearTimeout(toastTimer)
-    toastTimer = null
-  }
-
-  const toast = document.createElement('div')
-  toast.className = `custom-toast ${type}`
-  toast.textContent = message
-  document.body.appendChild(toast)
-
-  toastTimer = window.setTimeout(() => {
-    toast.classList.add('fade-out')
-    setTimeout(() => {
-      if (toast.parentNode) toast.remove()
-      toastTimer = null
-    }, 300)
-  }, 3000)
-}
-
-// ============================================================
 // 主函数：拉取模型列表（带智能降级）
 // ============================================================
 async function fetchModels() {
@@ -129,9 +99,8 @@ async function fetchModels() {
 
   // 3. 检查是否正在加载
   if (isFetching.value || !canFetch.value) return
-  if (isFetching.value || !canFetch.value) return
 
-  const provider = store.currentProvider
+  const provider = store.currentProvider!
   const endpoint = store.endpoint || provider.defaultEndpoint
   const apiKey = store.apiKey
 
@@ -172,11 +141,10 @@ async function fetchModels() {
     if (models.length > 0) {
       modelList.value = models
       if (!store.model || !models.includes(store.model)) {
-        store.model = models[0]
+        store.model = models[0]!
       }
       window.showToast(`✅ 成功拉取 ${models.length} 个模型（若部分模型未显示，可切换手动输入模式）`, 'success')
     } else {
-      // ⭐ 降级：自动切换到手动输入模式
       store.isManualModel = true
       const defaultModel = provider.defaultModel
       if (defaultModel && !store.model) {
@@ -187,7 +155,6 @@ async function fetchModels() {
     }
   } catch (error: any) {
     console.error('❌ 拉取模型失败:', error)
-    // ⭐ 降级：自动切换到手动输入模式
     store.isManualModel = true
     const defaultModel = provider.defaultModel
     if (defaultModel && !store.model) {
@@ -415,36 +382,5 @@ function extractModels(data: any): string[] {
   font-size: 12px;
   color: var(--danger);
   margin-top: 6px;
-}
-
-/* ===== Toast 弹窗样式（暴力修复版） ===== */
-.custom-toast {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  padding: 16px 32px !important;
-  border-radius: 12px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  z-index: 999999 !important; /* 拉到最高，打死也不被盖住 */
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
-  max-width: 90% !important;
-  text-align: center !important;
-  animation: slideDown 0.3s ease !important;
-}
-
-.custom-toast.success { background: #22c55e !important; color: #fff !important; }
-.custom-toast.error { background: #ef4444 !important; color: #fff !important; }
-.custom-toast.info { background: #2563eb !important; color: #fff !important; }
-
-.custom-toast.fade-out {
-  opacity: 0 !important;
-  transition: opacity 0.3s ease !important;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 </style>

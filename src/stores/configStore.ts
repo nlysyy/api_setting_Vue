@@ -28,10 +28,10 @@ export interface ApiConfig {
 }
 
 // ============================================================
-// 2. 服务商数据（从你的HTML里迁移过来的）
+// 2. 服务商数据
 // ============================================================
 
-const PROVIDERS: Provider[] = [
+export const PROVIDERS: Provider[] = [
   {
     id: 'deepseek',
     name: 'DeepSeek',
@@ -92,6 +92,30 @@ const PROVIDERS: Provider[] = [
     showKey: true,
     requiresKey: true,
   },
+  {
+    id: 'moonshot',
+    name: '月之暗面 (Moonshot)',
+    emoji: '🌙',
+    defaultEndpoint: 'https://api.moonshot.cn/v1',
+    keyPrefix: 'sk-',
+    defaultModel: 'moonshot-v1-8k',
+    hint: 'Moonshot：月之暗面，长文本处理',
+    showUrl: true,
+    showKey: true,
+    requiresKey: true,
+  },
+  {
+    id: 'stepfun',
+    name: '阶跃星辰 (StepFun)',
+    emoji: '⭐',
+    defaultEndpoint: 'https://api.stepfun.com/v1',
+    keyPrefix: 'sk-',
+    defaultModel: 'step-1-8k',
+    hint: 'StepFun：阶跃星辰，多模态大模型',
+    showUrl: true,
+    showKey: true,
+    requiresKey: true,
+  },
 ]
 
 // ============================================================
@@ -109,7 +133,7 @@ export const useConfigStore = defineStore('config', () => {
 
   // ---------- 计算属性（Getters） ----------
   const currentProvider = computed(() => {
-    return PROVIDERS.find(p => p.id === providerId.value) || PROVIDERS[0]
+    return (PROVIDERS.find(p => p.id === providerId.value) ?? PROVIDERS[0]) as Provider
   })
 
   const isValid = computed(() => {
@@ -171,6 +195,7 @@ export const useConfigStore = defineStore('config', () => {
     apiKey.value = ''
     endpoint.value = ''
     model.value = currentProvider.value.defaultModel
+    temperature.value = 0.7
     isManualModel.value = false
     localStorage.removeItem('api_config')
   }
