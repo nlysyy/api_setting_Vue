@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "deploy": "npm run build && cp -r dist/* ."
+    "deploy": "npm run build && xcopy /E /I dist\\* ."
   },
   "dependencies": {
     "pinia": "^3.0.4",
