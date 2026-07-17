@@ -39,6 +39,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useConfigStore } from '@/stores/configStore'
+import { apiPost } from '@/api'
 
 const store = useConfigStore()
 const isTesting = ref(false)
@@ -49,12 +50,13 @@ interface TestResult {
   duration: number
   speedRating: string
   error?: string
+  message?: string
 }
 
 const testResult = ref<TestResult | null>(null)
 
 // ============================================================
-// 真实 API 测试连接（从 Flutter 翻译过来）
+// 测试连接（通过后端代理）
 // ============================================================
 async function testConnection() {
   if (!store.isValid || isTesting.value) return
@@ -63,16 +65,6 @@ async function testConnection() {
   const endpoint = store.endpoint || provider.defaultEndpoint
   const apiKey = store.apiKey
   const model = store.model
-
-  // 本地模型直接返回成功
-  if (provider.id === 'localBuiltin') {
-    testResult.value = {
-      success: true,
-      duration: 50,
-      speedRating: '极快 🚀',
-    }
-    return
-  }
 
   // 检查必要参数
   if (!apiKey) {
@@ -97,92 +89,27 @@ async function testConnection() {
 
   isTesting.value = true
   testResult.value = null
-  const startTime = Date.now()
 
   try {
-    // 构建请求 URL
-    let url = endpoint
-    if (!url.endsWith('/chat/completions')) {
-      url = url.endsWith('/') ? url + 'chat/completions' : url + '/chat/completions'
-    }
-
-    // 构建请求体（OpenAI 兼容格式）
-    const requestBody = {
-      model: model,
-      messages: [{ role: 'user', content: 'test' }],
-      max_tokens: 5,
-    }
-
-    console.log('📡 测试连接:', { url, model })
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(10000), // 10 秒超时
+    const result = await apiPost<TestResult>('/api/connection/test', {
+      providerId: provider.id,
+      endpoint,
+      apiKey,
+      model,
     })
 
-    const duration = Date.now() - startTime
-
-    // 处理响应
-    if (response.ok) {
-      // 尝试解析响应，验证是否为有效 JSON
-      try {
-        const data = await response.json()
-        console.log('✅ 测试成功:', data)
-        testResult.value = {
-          success: true,
-          duration: duration,
-          speedRating: getSpeedRating(duration),
-        }
-      } catch {
-        // 响应不是 JSON，但也算是成功
-        testResult.value = {
-          success: true,
-          duration: duration,
-          speedRating: getSpeedRating(duration),
-        }
-      }
-    } else {
-      // 尝试解析错误信息
-      let errorMsg = `HTTP ${response.status}`
-      try {
-        const errorData = await response.json()
-        if (errorData.error?.message) {
-          errorMsg = errorData.error.message
-        } else if (errorData.message) {
-          errorMsg = errorData.message
-        }
-      } catch {
-        // 无法解析错误信息，使用状态码
-      }
-
-      testResult.value = {
-        success: false,
-        duration: duration,
-        speedRating: '失败 ❌',
-        error: errorMsg,
-      }
-      console.error('❌ 测试失败:', response.status, errorMsg)
+    testResult.value = {
+      success: result.success,
+      duration: result.duration,
+      speedRating: result.speedRating,
+      error: result.success ? undefined : result.error,
     }
   } catch (error: any) {
-    const duration = Date.now() - startTime
-    let errorMsg = '连接超时或网络错误'
-
-    if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-      errorMsg = '请求超时，请检查网络或 API 配置'
-    } else if (error.message) {
-      errorMsg = error.message
-    }
-
     testResult.value = {
       success: false,
-      duration: duration,
+      duration: 0,
       speedRating: '失败 ❌',
-      error: errorMsg,
+      error: error.message || '连接超时，请检查网络或后端服务是否启动',
     }
     console.error('❌ 测试异常:', error)
   } finally {
@@ -191,35 +118,29 @@ async function testConnection() {
 }
 
 // ============================================================
-// 速度评级
-// ============================================================
-function getSpeedRating(duration: number): string {
-  if (duration < 300) return '极快 🚀'
-  if (duration < 800) return '快速 ⚡'
-  if (duration < 1500) return '正常 ✅'
-  if (duration < 3000) return '较慢 🐢'
-  return '很慢 ⚠️'
-}
-
-// ============================================================
 // 保存 & 清除
 // ============================================================
 function saveConfig() {
   if (!store.isValid) return
-  store.saveToStorage()
   const btn = document.activeElement as HTMLElement
   const original = btn.textContent
-  btn.textContent = '✅ 已保存'
-  setTimeout(() => { btn.textContent = original }, 1500)
+
+  store.saveConfig().then((saved) => {
+    btn.textContent = saved ? '✅ 已保存到云端' : '✅ 已保存'
+    setTimeout(() => { btn.textContent = original }, 2000)
+  }).catch(() => {
+    btn.textContent = '❌ 保存失败'
+    setTimeout(() => { btn.textContent = original }, 2000)
+  })
 }
 
-function clearConfig() {
-  store.clearConfig()
+async function clearConfig() {
+  await store.clearConfig()
   testResult.value = null
   showConfirm.value = false
 }
 </script>
 
 <style scoped>
-/* 所有样式已经在 App.vue 里定义，这里留空即可 */
+/* 所有样式已经在 App.vue 里定义 */
 </style>

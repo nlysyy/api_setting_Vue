@@ -96,7 +96,7 @@ function showToast(message: string, type: 'success' | 'error' | 'info' = 'info')
 window.showToast = showToast
 
 onMounted(() => {
-  store.loadFromStorage()
+  store.loadConfig()       // 后端优先，不可用时降级到 localStorage
 })
 </script>
 
