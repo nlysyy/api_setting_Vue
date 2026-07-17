@@ -37,7 +37,7 @@
       </div>
       <div class="input-error" v-if="!store.apiKey && showError">请输入API密钥</div>
     </div>
-    <div class="hint-text">密钥存储在本地浏览器中，不会上传到任何服务器</div>
+    <div class="hint-text">密钥加密保存到服务器，传输过程请确保网络环境安全</div>
   </div>
 </template>
 
